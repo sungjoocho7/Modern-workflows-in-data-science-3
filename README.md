@@ -75,8 +75,20 @@ tzcode source: system (glibc)
 attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base     
 
+other attached packages:
+ [1] sparklyr_1.8.5  haven_2.5.3     knitr_1.46      texreg_1.39.3   broom_1.0.5     forcats_1.0.0  
+ [7] stringr_1.5.0   dplyr_1.1.2     purrr_1.0.2     readr_2.1.4     tibble_3.2.1    ggplot2_3.4.3  
+[13] tidyverse_2.0.0 lubridate_1.9.2 tidyr_1.3.0    
+
 loaded via a namespace (and not attached):
-[1] compiler_4.3.1 tools_4.3.1 
+ [1] jsonlite_1.8.7    gtable_0.3.4      compiler_4.3.1    tidyselect_1.2.1  parallel_4.3.1   
+ [6] scales_1.2.1      yaml_2.3.7        R6_2.5.1          generics_0.1.3    backports_1.4.1  
+[11] openssl_2.1.0     munsell_0.5.0     DBI_1.1.3         pillar_1.9.0      tzdb_0.4.0       
+[16] rlang_1.1.1       utf8_1.2.3        stringi_1.7.12    xfun_0.43         config_0.3.2     
+[21] timechange_0.2.0  cli_3.6.1         withr_2.5.0       magrittr_2.0.3    grid_4.3.1       
+[26] rstudioapi_0.15.0 dbplyr_2.5.0      askpass_1.1       hms_1.1.3         lifecycle_1.0.3  
+[31] vctrs_0.6.3       glue_1.6.2        fansi_1.0.4       colorspace_2.1-0  httr_1.4.7       
+[36] tools_4.3.1       pkgconfig_2.0.3
 ```
 >>>>>>> 66e544de888d1530506c54d3c5321c1bbd9899d7
 
