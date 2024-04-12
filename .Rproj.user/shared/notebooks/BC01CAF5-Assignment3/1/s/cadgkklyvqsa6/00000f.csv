@@ -1,0 +1,36 @@
+"0","#spark_install(version = ""3.5.1"")"
+"0","library(sparklyr)"
+"2","Registered S3 methods overwritten by 'dbplyr':
+  method         from
+  print.tbl_lazy     
+  print.tbl_sql      
+"
+"2","
+Attaching package: ‘sparklyr’
+
+"
+"2","The following object is masked from ‘package:purrr’:
+
+    invoke
+
+"
+"2","The following object is masked from ‘package:stats’:
+
+    filter
+
+"
+"0","# check Java version"
+"0","system(""java -version"")"
+"2","java version ""19.0.2"" 2023-01-17
+"
+"2","Java(TM) SE Runtime Environment (build 19.0.2+7-44)
+Java HotSpot(TM) 64-Bit Server VM (build 19.0.2+7-44, mixed mode, sharing)
+"
+"0","# check sparklyr version"
+"0","packageVersion(""sparklyr"")"
+"1","[1]"
+"1"," ‘1.8.5’"
+"1","
+"
+"0","# check available Spark versions"
+"0","spark_installed_versions()"

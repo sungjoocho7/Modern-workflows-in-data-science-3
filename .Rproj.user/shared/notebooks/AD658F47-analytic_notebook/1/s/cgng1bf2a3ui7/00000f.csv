@@ -1,0 +1,8 @@
+"0","# get two data sets from github"
+"0","count_city_github_url <- "
+"0","  ""https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/UID_ISO_FIPS_LookUp_Table.csv?raw=true"""
+"0","count_city <- read.csv(count_city_github_url)"
+"0",""
+"0","timeseries_github_url <- "
+"0","  ""https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv?raw=true"""
+"0","timeseries <- read.csv(timeseries_github_url)"

@@ -1,0 +1,5 @@
+"0","# save original dataset locally
+save(covid, file = ""data/covid.csv"")
+"
+"2","Error in save(covid, file = ""data/covid.csv"") : object ‘covid’ not found
+"

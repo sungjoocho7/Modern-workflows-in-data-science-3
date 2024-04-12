@@ -1,0 +1,210 @@
+---
+title: "COVID-19 Analysis Using Spark"
+author: "Sungjoo Cho"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+### 1. Libraries
+
+```{r message=FALSE, warning=FALSE}
+# library
+library(tidyr)
+library(lubridate)
+library(tidyverse)
+library(broom)
+library(texreg)
+library(knitr)
+library(ggplot2)
+library(dplyr)
+library(haven)
+```
+
+
+### 2. Set up a local Spark server
+
+A local Spark server can be set up by importing the `sparklyr` library.The code below will check the installed version and available Spark versions.
+
+```{r}
+#spark_install(version = "3.5.1")
+library(sparklyr)
+
+# check Java version
+system("java -version")
+
+# check sparklyr version
+packageVersion("sparklyr")
+
+# check available Spark versions
+spark_installed_versions()
+```
+
+
+### 3. Adding two datasets about COVID-19 and Data cleaning
+
+Two datasets about COVID-19 were obtained from the [GitHub repository](https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data). 
+
+```{r}
+# get two data sets from github
+count_city_github_url <- 
+  "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/UID_ISO_FIPS_LookUp_Table.csv?raw=true"
+count_city <- read.csv(count_city_github_url)
+
+timeseries_github_url <- 
+  "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv?raw=true"
+timeseries <- read.csv(timeseries_github_url)
+```
+
+The variables 'Province.State', 'Country.Region', 'Lat', 'Long' in the `timeseries` dataframe were dropped as they were duplicates in the `count_city` dataframe. Then, the data was transformed into long format with the number of Covid cases. Also, a new variable named `days` was added, representing the number of days since the start of the data collection.
+
+```{r}
+# drop columns that are in timeseries
+count_city <- select(count_city, -Province_State, -Country_Region, -Lat, -Long_)
+
+# change timeseries data to longer format
+timeseries_long <- timeseries %>%
+  pivot_longer(
+    cols = !c(Province.State, Country.Region, Lat, Long),
+    names_to = "time",
+    values_to = "case"
+  )
+
+# change time to month-day-year format
+timeseries_long$date <- gsub("^X", "", timeseries_long$time)
+timeseries_long$date <- mdy(timeseries_long$date)
+
+# create another variable (number of days since the start of the data collection)
+start_date <- min(timeseries_long$date)
+timeseries_long <- timeseries_long %>%
+  mutate(days = as.numeric(date - start_date))
+
+# create combined key
+timeseries_long$Combined_Key <- 
+  ifelse(is.na(timeseries_long$Province.State) | timeseries_long$Province.State == "",
+         timeseries_long$Country.Region,
+         paste(timeseries_long$Province.State, timeseries_long$Country.Region, sep = ", "))
+```
+
+Below are first few rows of the two data sets before they are merged in Spark.
+
+```{r}
+head(count_city)
+head(timeseries_long)
+```
+
+
+### 4. Merging two datasets in Spark
+
+In Spark, two datasets were merged with a smaller version that includes only: Germany, China, Japan, United Kingdom, US, Brazil, and Mexico. To connect to the local cluster, `spark_connect()` was used.
+
+```{r}
+# set up a local Spark connection
+sc <- spark_connect(master = "local")
+
+# copying datasets into Spark
+city <- copy_to(sc, count_city, overwrite = TRUE)
+time <- copy_to(sc, timeseries_long, overwrite = TRUE)
+
+# merging data
+covid_full <- time %>%
+  left_join(city, by = "Combined_Key")
+
+# selected countries
+sel_countries <- c("Germany", "China", "Japan", "United Kingdom", "US", "Brazil", "Mexico")
+covid <- covid_full %>%
+  filter(Country_Region %in% sel_countries)
+```
+
+Below is the first few rows of the merged dataset in Spark that includes only seven countries. 
+
+```{r}
+head(covid)
+
+# save original dataset locally
+#save(covid, file = "data/covid.csv")
+```
+
+### 5. Calculating the number of cases and rate of cases (cases/population) by country and day and Creating two graphs and interpreting them: change in the number of cases and change in rate by country.
+
+The summary table and graphs below show the change in the number of cases by country over time. All seven countries exhibit increasing trends in the number of COVID cases over time. Notably, US has experienced particularly rapid increases in the number of cases, while other countries show a more steady trend.
+
+```{r}
+# calculate the number of cases by country and day
+tab_change_case <- covid %>%
+  group_by(Country_Region, days) %>%
+  summarise(sum_case = sum(case, na.rm = TRUE),
+            .groups = "drop")
+tab_change_case
+
+plot_change_case <- ggplot(data=tab_change_case, aes(days, sum_case, color = Country_Region)) +
+  geom_line() +
+  theme_bw() +
+  labs(x = "Time",
+       y = "Number of cases",
+       title = "Change in the number of cases")
+
+# save
+ggsave("figs/plot_change_case.png", plot = plot_change_case)
+```
+
+Furthermore, the summary table and graphs below illustrate the change in the rate of cases by country over time. The rate of cases was calculated as (cases/population). It shows that the rate of cases is significantly and rapidly increasing over time in the United Kingdom, whereas other countries exhibit a more steady trend.
+
+```{r}
+# calculate rate of cases (cases/population) by country and day
+tab_change_rate <- covid %>%
+  group_by(Country_Region, days) %>%
+  summarise(sum_case = sum(case, na.rm = TRUE), 
+            population = mean(Population, na.rm = T),
+            .groups = "drop") %>%
+  mutate(rate = (sum_case / population))
+tab_change_rate
+
+plot_change_rate <- ggplot(data=tab_change_rate, aes(days, rate, color = Country_Region)) +
+  geom_line() +
+  theme_bw() +
+  labs(x = "Time",
+       y = "Rate",
+       title = "Change in the rate by country")
+
+# save
+ggsave("figs/plot_change_rate.png", plot = plot_change_rate)
+```
+
+### 6. Fitting a ml_linear_regression explaining the log of number of cases using: country, population size and day since the start of the pandemic. Interpret the results.
+
+Next, a linear model was fitted to approximate the relationship between the log number of cases and three predictors: country, population size, and day since of the pandemic. The `ml_linear_regression()` function was used for this analysis. The table presented below displays the output from the regression model. The United States was used as a reference category in this model.
+
+It indicates that all predictors (country, population, and days) significantly influence the log number of COVID19 cases (p<0.05). Holding all other predictors constant, the log number of cases is higher in all other countries than that of the US. Additionally, the one-unit increase in the number of days results in a increase of 0.0043287 in the log number of cases, when all other predictors are hold constant.
+
+```{r}
+# log case and remove NA in Population variable
+covid <- covid %>%
+  mutate(log_case = log(case+1)) %>%
+  filter(!is.na(Population))
+
+# log number of cases
+model <- ml_linear_regression(covid, log_case ~ Country_Region + Population + days)
+```
+
+```{r results='asis'}
+# coefficients
+coeff <- tidy(model)
+kable(coeff, caption = "Coefficients of regression model")
+
+# regression model table
+texreg(model, caption = "Output from regression model")
+```
+
+
+
+
+
+
