@@ -129,7 +129,7 @@ Below is the first few rows of the merged dataset in Spark that includes only se
 head(covid)
 
 # save original dataset locally
-#save(covid, file = "data/covid.csv")
+save(covid, file = "data/covid.csv")
 ```
 
 ### 5. Calculating the number of cases and rate of cases (cases/population) by country and day and Creating two graphs and interpreting them: change in the number of cases and change in rate by country.
