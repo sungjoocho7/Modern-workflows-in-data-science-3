@@ -26,8 +26,7 @@ Original datasets are UID_ISO_FIPS_LookUp_Table.csv and time_series_covid19_conf
 This repository is organized as follows:
 
 -   **/data** - Contains the merged datasets used in the analysis.
--   **/script** - Contains a markdown document used to generate an analytic notebook.
--   **/report** - Contains an analytic notebook (PDF Rmarkdown) that shows all the syntax and the results for the analysis.
+-   **/report** - Contains an analytic notebook (PDF Rmarkdown) that shows all the syntax and the results for the analysis and the corresponding markdown document used to generate an analytic notebook.
 -   **/figs** - Contains figures (plot, etc) generated during the analysis.
 -   **/documentation** - Contains the instructional document and HTML version of README.
 
