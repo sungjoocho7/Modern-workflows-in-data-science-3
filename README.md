@@ -29,7 +29,7 @@ This repository is organized as follows:
 -   **/script** - Contains a markdown document used to generate an analytic notebook.
 -   **/report** - Contains an analytic notebook (PDF Rmarkdown) that shows all the syntax and the results for the analysis.
 -   **/figs** - Contains figures (plot, etc) generated during the analysis.
--   **/documentation** - Contains the instructional document.
+-   **/documentation** - Contains the instructional document and HTML version of README.
 
 
 ## Analysis steps
