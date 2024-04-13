@@ -63,7 +63,7 @@ timeseries_github_url <-
 timeseries <- read.csv(timeseries_github_url)
 ```
 
-The variables 'Province.State', 'Country.Region', 'Lat', 'Long' in the `timeseries` dataframe were dropped as they were duplicates in the `count_city` dataframe. Then, the data was transformed into long format with the number of Covid cases. Also, a new variable named `days` was added, representing the number of days since the start of the data collection.
+The variables 'Province.State', 'Country.Region', 'Lat', 'Long' in the `count_city` dataframe were dropped as they were duplicates in the `timeseries` dataframe. Then, the data was transformed into long format with the number of Covid cases. Also, a new variable named `days` was added, representing the number of days since the start of the data collection.
 
 ```{r}
 # drop columns that are in timeseries
@@ -93,7 +93,7 @@ timeseries_long$Combined_Key <-
          paste(timeseries_long$Province.State, timeseries_long$Country.Region, sep = ", "))
 ```
 
-Below are first few rows of the two data sets before they are merged in Spark.
+These are the first few rows of the two datasets before they are merged in Spark.
 
 ```{r}
 head(count_city)
@@ -103,7 +103,7 @@ head(timeseries_long)
 
 ### 4. Merging two datasets in Spark
 
-In Spark, two datasets were merged with a smaller version that includes only: Germany, China, Japan, United Kingdom, US, Brazil, and Mexico. To connect to the local cluster, `spark_connect()` was used.
+In Spark, two datasets were merged with a subset that includes only: Germany, China, Japan, United Kingdom, US, Brazil, and Mexico. To connect to the local cluster, `spark_connect()` was used.
 
 ```{r}
 # set up a local Spark connection
@@ -123,7 +123,7 @@ covid <- covid_full %>%
   filter(Country_Region %in% sel_countries)
 ```
 
-Below is the first few rows of the merged dataset in Spark that includes only seven countries. 
+These are the first few rows of the merged dataset in Spark, containing only seven countries. 
 
 ```{r}
 head(covid)
@@ -142,7 +142,7 @@ tab_change_case <- covid %>%
   group_by(Country_Region, days) %>%
   summarise(sum_case = sum(case, na.rm = TRUE),
             .groups = "drop")
-tab_change_case
+head(tab_change_case)
 
 plot_change_case <- ggplot(data=tab_change_case, aes(days, sum_case, color = Country_Region)) +
   geom_line() +
@@ -150,6 +150,7 @@ plot_change_case <- ggplot(data=tab_change_case, aes(days, sum_case, color = Cou
   labs(x = "Time",
        y = "Number of cases",
        title = "Change in the number of cases")
+plot_change_case
 
 # save
 ggsave("figs/plot_change_case.png", plot = plot_change_case)
@@ -165,7 +166,7 @@ tab_change_rate <- covid %>%
             population = mean(Population, na.rm = T),
             .groups = "drop") %>%
   mutate(rate = (sum_case / population))
-tab_change_rate
+head(tab_change_rate)
 
 plot_change_rate <- ggplot(data=tab_change_rate, aes(days, rate, color = Country_Region)) +
   geom_line() +
@@ -173,6 +174,7 @@ plot_change_rate <- ggplot(data=tab_change_rate, aes(days, rate, color = Country
   labs(x = "Time",
        y = "Rate",
        title = "Change in the rate by country")
+plot_change_rate
 
 # save
 ggsave("figs/plot_change_rate.png", plot = plot_change_rate)
@@ -182,7 +184,7 @@ ggsave("figs/plot_change_rate.png", plot = plot_change_rate)
 
 Next, a linear model was fitted to approximate the relationship between the log number of cases and three predictors: country, population size, and day since of the pandemic. The `ml_linear_regression()` function was used for this analysis. The table presented below displays the output from the regression model. The United States was used as a reference category in this model.
 
-It indicates that all predictors (country, population, and days) significantly influence the log number of COVID19 cases (p<0.05). Holding all other predictors constant, the log number of cases is higher in all other countries than that of the US. Additionally, the one-unit increase in the number of days results in a increase of 0.0043287 in the log number of cases, when all other predictors are hold constant.
+It indicates that all predictors (country, population, and days) significantly influence the log number of COVID19 cases (p<0.05). Holding all other predictors constant, the log number of cases is higher in all other countries than that of the US. Additionally, the one-unit increase in the number of days results in a increase of 0.0043287 in the log number of cases in the US, when the other predictor is hold constant.
 
 ```{r}
 # log case and remove NA in Population variable
